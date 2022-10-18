@@ -5,7 +5,8 @@ class CBC {
 
     public:
         CBC(unsigned long IV, void (*encrypt_algo)(), void (*decrypt_algo)());
-        unsigned char * encryp(unsigned char *);
-        unsigned char * decrypt(unsigned char *);
-}
+        void set_message();
+        unsigned char * encryp_next_block(unsigned char *);
+        unsigned char * decrypt_next_block(unsigned char *);
+};
 #endif
