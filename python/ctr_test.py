@@ -1,7 +1,7 @@
 from Crypto.Cipher import AES
 from Crypto import Random
 
-from cbc import *
+from ctr import *
 
 if __name__ == "__main__": 
 	# set up
@@ -14,24 +14,27 @@ if __name__ == "__main__":
 
 	original_message = "helllo there my name is long, nice to meet you, hallo, dance, think before you do, be bold, code the future, power, sing, song 123"
 
-	# create a cbc object
-	cbc = CBC(IV, block_size, key, e_algo, d_algo)
-	cbc.set_message(original_message)
+	# create a ctr object
+	ctr = CTR(IV, block_size, key, e_algo, d_algo)
+	ctr.set_message(original_message)
+	ctr.calculate_xor_nums()
 
 	# get the encryption blocks
-	block_to_send = cbc.get_block()
+	block_to_send = ctr.get_block()
 	blocks = []
 	while block_to_send != None:
 		blocks.append(block_to_send)
 		print("encrypted block: ", block_to_send)
 		#sock.sendto(block_to_send, (UDP_IP, UDP_PORT))
-		block_to_send = cbc.get_block()
+		block_to_send = ctr.get_block()
 
 	# decrypt the blocks
-	cbc = CBC(IV, block_size, key, e_algo, d_algo)
+	ctr = CTR(IV, block_size, key, e_algo, d_algo)
+	ctr.set_block_num(len(blocks))
+	ctr.calculate_xor_nums()
 	plain_texts = []
 	for block in blocks:
-		plain_block = cbc.decrypt_block(block)
+		plain_block = ctr.decrypt_block(block)
 		print("decrypted block",plain_block)
 		message = plain_block.decode("utf-8")
 		plain_texts.append(message)
