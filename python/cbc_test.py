@@ -1,18 +1,9 @@
-# If we want to be parallel and not just concurrent, we need to use Pool 
-from pydoc import plain
-import socket
-from sys import orig_argv 
-
 from Crypto.Cipher import AES
 from Crypto import Random
 
 from cbc import *
 
 if __name__ == "__main__": 
-	# UDP_IP = "127.0.0.1"
-	# UDP_PORT = 8080
-	# sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-	
 	# set up
 	block_size = 16
 	IV = Random.new().read(block_size)

@@ -1,4 +1,7 @@
-class CBC:
+from random import random
+
+
+class OFB:
     # Constructor
     # IV: the initial IV
     # block_size: the number of bytes the block have
@@ -8,7 +11,7 @@ class CBC:
     def __init__(self, IV, block_size, key, e_algo, d_algo):
         self.blocks = []
         self.blocks_num = 0
-        self.last_block = IV
+        self.random_nums = [IV]
         self.block_size = block_size
         self.key = key
         self.e_algo = e_algo
@@ -29,7 +32,17 @@ class CBC:
             block = int.to_bytes(block, self.block_size, "little")
             self.blocks.append(block)
         print(len(self.blocks))
-        self.blocks_num = len(self.blocks)
+        self.set_block_num(len(self.blocks))
+
+    def set_block_num(self, num):
+        self.blocks_num = num
+    
+    def calculate_xor_nums(self):
+        for i in range(1, self.blocks_num):
+            num = self.random_nums[i-1]
+            num = self.e_algo(num)
+            self.random_nums.append(num)
+
                                
     # get a block from the disk 
     def get_block(self):
@@ -44,18 +57,13 @@ class CBC:
         p_block = self.blocks[index]
         p_block = int.from_bytes(p_block, "little")
 
-        # get the last block and convert it into int
-        last_block = int.from_bytes(self.last_block, "little")
+        # encrypt the last random number    
+        random_num = self.random_nums[index]
+        random_num = int.from_bytes(random_num, "little")
 
         # xor the two numbers and convert it into a bytes object
-        c_block = p_block ^ last_block #what to do if the number of bits of number is bigger than block size. 
+        c_block = p_block ^ random_num #what to do if the number of bits of number is bigger than block size. 
         c_block = int.to_bytes(c_block, self.block_size, "little")
-
-        # run the encryption algorithm on the bytes object
-        c_block = self.e_algo(c_block)
-
-        # set last block to this block
-        self.last_block = c_block
        
         return c_block
         
@@ -63,9 +71,13 @@ class CBC:
     # decrypt a block
     def decrypt_block(self, block):
         index = self.block_index
-        index = index + 1
-        c_block = block
-        p_block = int.from_bytes(self.d_algo(c_block), "little") ^ int.from_bytes(self.last_block, "little")
-        self.last_block = c_block
+        self.block_index = index + 1
+
+        random_num = self.random_nums[index]
+        random_num = int.from_bytes(random_num, "little")
+
+        c_block = int.from_bytes(block, "little")
+        
+        p_block = c_block ^ random_num
 
         return int.to_bytes(p_block, self.block_size, "little")
