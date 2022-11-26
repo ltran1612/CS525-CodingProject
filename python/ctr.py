@@ -63,6 +63,7 @@ class CTR:
         # xor the two numbers and convert it into a bytes object
         c_block = p_block ^ random_num #what to do if the number of bits of number is bigger than block size. 
         c_block = int.to_bytes(c_block, self.block_size, "little")
+        
        
         return c_block
    

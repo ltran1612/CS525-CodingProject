@@ -20,13 +20,15 @@ if __name__ == "__main__":
 	ofb.calculate_xor_nums()
 
 	# get the encryption blocks
-	block_to_send = ofb.get_block()
+	block_to_send = ofb.get_block(0)
 	blocks = []
+	index = 1
 	while block_to_send != None:
 		blocks.append(block_to_send)
 		print("encrypted block: ", block_to_send)
 		#sock.sendto(block_to_send, (UDP_IP, UDP_PORT))
-		block_to_send = ofb.get_block()
+		block_to_send = ofb.get_block(index)
+		index = index + 1
 
 	# decrypt the blocks
 	ofb = OFB(IV, block_size, key, e_algo, d_algo)

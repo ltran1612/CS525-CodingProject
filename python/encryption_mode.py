@@ -13,7 +13,7 @@ class EncryptionMode:
         self.key = key
         self.e_algo = e_algo
         self.d_algo = d_algo
-        self.usable_block_size = self.block_size - self.numbering_size
+        self.total_block_size = self.block_size + self.numbering_size
 
     def get_size(self):
         return self.blocks_num
@@ -22,19 +22,18 @@ class EncryptionMode:
     def set_message(self, message):
         string_byte = bytes(message, "utf-8")
         
-        temp = [string_byte[i:i + self.usable_block_size] for i in range(0, len(string_byte), self.usable_block_size)]
+        temp = [string_byte[i:i + self.block_size] for i in range(0, len(string_byte), self.block_size)]
         blocks = temp
-        block_of_0 = int.from_bytes(bytes(self.usable_block_size), "little")
+        block_of_0 = int.from_bytes(bytes(self.block_size), "little")
         for block in blocks:
             num_b = int.from_bytes(block, "little")
             block = num_b | block_of_0
-            block = int.to_bytes(block, self.usable_block_size, "little")
+            block = int.to_bytes(block, self.block_size, "little")
             print("message block", block)
             self.blocks.append(block)
         
         self.blocks_num = len(self.blocks)
-    
-        
+
     def add_index_to_block(self, block, block_index):
         index = block_index
       

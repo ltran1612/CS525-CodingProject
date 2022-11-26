@@ -44,5 +44,5 @@ class CBC(EncryptionMode):
         c_block = block[4:]
         p_block = int.from_bytes(self.d_algo(c_block), "little") ^ int.from_bytes(self.last_block, "little")
         self.last_block = c_block
-        result = int.to_bytes(p_block, self.usable_block_size, "little")
+        result = int.to_bytes(p_block, self.block_size, "little")
         return result
