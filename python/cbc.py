@@ -1,4 +1,6 @@
-class CBC:
+from encryption_mode import EncryptionMode
+
+class CBC(EncryptionMode):
     # Constructor
     # IV: the initial IV
     # block_size: the number of bytes the block have
@@ -6,39 +8,16 @@ class CBC:
     # e_algo: the encryption algorithm function
     # d_algo: the decryption algorithm function
     def __init__(self, IV, block_size, key, e_algo, d_algo):
-        self.blocks = []
-        self.blocks_num = 0
-        self.last_block = IV
-        self.block_size = block_size
-        self.key = key
-        self.e_algo = e_algo
-        self.d_algo = d_algo
-        self.block_index = 0
+       super().__init__(IV, block_size, key, e_algo, d_algo)
+       self.last_block = IV
 
-    # Parse the message in to blocks
-    def set_message(self, message):
-        string_byte = bytes(message, "utf-8")
-        block_of_0 = int.from_bytes(bytes(self.block_size), "little")
-        temp = [string_byte[i:i + self.block_size] for i in range(0, len(string_byte), self.block_size)]
-        blocks = temp
-
-        # add padding, if needed
-        for b in blocks:
-            num = int.from_bytes(b, "little")
-            block = num | block_of_0
-            block = int.to_bytes(block, self.block_size, "little")
-            self.blocks.append(block)
-        print(len(self.blocks))
-        self.blocks_num = len(self.blocks)
-                               
     # get a block from the disk 
-    def get_block(self):
-        if self.block_index >= self.blocks_num:
+    def get_block(self, block_index):
+        if block_index >= self.blocks_num:
             return None
 
         # set and increment the index
-        index = self.block_index
-        self.block_index = self.block_index + 1
+        index = block_index
 
         # get the next block and convert it into int
         p_block = self.blocks[index]
@@ -57,15 +36,13 @@ class CBC:
         # set last block to this block
         self.last_block = c_block
        
-        return c_block
-        
+        return self.add_index_to_block(c_block, block_index)
+
    
     # decrypt a block
     def decrypt_block(self, block):
-        index = self.block_index
-        index = index + 1
-        c_block = block
+        c_block = block[4:]
         p_block = int.from_bytes(self.d_algo(c_block), "little") ^ int.from_bytes(self.last_block, "little")
         self.last_block = c_block
-
-        return int.to_bytes(p_block, self.block_size, "little")
+        result = int.to_bytes(p_block, self.usable_block_size, "little")
+        return result

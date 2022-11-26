@@ -19,22 +19,26 @@ if __name__ == "__main__":
 	cbc.set_message(original_message)
 
 	# get the encryption blocks
-	block_to_send = cbc.get_block()
+	block_to_send = cbc.get_block(0)
 	blocks = []
+	index = 1
 	while block_to_send != None:
 		blocks.append(block_to_send)
 		print("encrypted block: ", block_to_send)
 		#sock.sendto(block_to_send, (UDP_IP, UDP_PORT))
-		block_to_send = cbc.get_block()
+		block_to_send = cbc.get_block(index)
+		index = index + 1
 
 	# decrypt the blocks
 	cbc = CBC(IV, block_size, key, e_algo, d_algo)
 	plain_texts = []
+	index = 0
 	for block in blocks:
 		plain_block = cbc.decrypt_block(block)
 		print("decrypted block",plain_block)
 		message = plain_block.decode("utf-8")
 		plain_texts.append(message)
+		index = index + 1
 	
 	print(original_message)
 	decrypted_message = "".join(plain_texts)
