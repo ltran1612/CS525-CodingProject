@@ -57,6 +57,7 @@ if __name__ == "__main__":
 		3) CTR
 		"""))
 
+		encrypt_mode = None
 		if opt == 2:
 			pass
 		elif opt == 3:
@@ -66,26 +67,25 @@ if __name__ == "__main__":
 			cbc = CBC(IV, block_size, key, e_algo, d_algo)
 			cbc.set_message(original_message)
 
-			# set the message size
-			block_nums = cbc.get_size()
-			#print(block_nums)
-			
+		# set the message size
+		block_nums = encrypt_mode.get_size()
+		#print(block_nums)
 
-			start_time = time.perf_counter_ns()
-			# do stuffs here
-			# get the encryption blocks
-			# block_to_send = cbc.get_block(0)
-			# index = 1
-			# while block_to_send != None:
-			# 	print("encrypted block: ", block_to_send)
-			# 	sock.sendto(block_to_send, (UDP_IP, UDP_PORT))
-			# 	block_to_send = cbc.get_block(index)
-			# 	index = index + 1
-			# send the message size
-			sock.sendto(int.to_bytes(block_nums, 4, "little"), (UDP_IP, UDP_PORT))
+		start_time = time.perf_counter_ns()
+		# do stuffs here
+		# get the encryption blocks
+		# block_to_send = cbc.get_block(0)
+		# index = 1
+		# while block_to_send != None:
+		# 	print("encrypted block: ", block_to_send)
+		# 	sock.sendto(block_to_send, (UDP_IP, UDP_PORT))
+		# 	block_to_send = cbc.get_block(index)
+		# 	index = index + 1
+		# send the message size
+		sock.sendto(int.to_bytes(block_nums, 4, "little"), (UDP_IP, UDP_PORT))
 
-			with open("sender.csv", "w") as outfile:
-				outfile.write(start_time)
+		with open("sender.csv", "w") as outfile:
+			outfile.write(start_time)
 	
 
 			
