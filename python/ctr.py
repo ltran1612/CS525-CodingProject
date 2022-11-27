@@ -1,7 +1,8 @@
 from random import random
+from encryption_mode import EncryptionMode
 
 
-class CTR:
+class CTR(EncryptionMode):
     # Constructor
     # IV: the initial IV
     # block_size: the number of bytes the block have
@@ -9,70 +10,38 @@ class CTR:
     # e_algo: the encryption algorithm function
     # d_algo: the decryption algorithm function
     def __init__(self, IV, block_size, key, e_algo, d_algo):
-        self.blocks = []
-        self.blocks_num = 0
-        self.random_nums = [IV]
-        self.block_size = block_size
-        self.key = key
-        self.e_algo = e_algo
-        self.d_algo = d_algo
-        self.block_index = 0
-
-    # Parse the message in to blocks
-    def set_message(self, message):
-        string_byte = bytes(message, "utf-8")
-        block_of_0 = int.from_bytes(bytes(self.block_size), "little")
-        temp = [string_byte[i:i + self.block_size] for i in range(0, len(string_byte), self.block_size)]
-        blocks = temp
-
-        # add padding, if needed
-        for b in blocks:
-            num = int.from_bytes(b, "little")
-            block = num | block_of_0
-            block = int.to_bytes(block, self.block_size, "little")
-            self.blocks.append(block)
-        print(len(self.blocks))
-        self.set_block_num(len(self.blocks))
-
-    def set_block_num(self, num):
-        self.blocks_num = num
-    
-    def calculate_xor_nums(self):
-        for i in range(1, self.blocks_num):
-            num = int.to_bytes(i, self.block_size, "little")
-            num = self.e_algo(num)
-            self.random_nums.append(num)
+       super().__init__(IV, block_size, key, e_algo, d_algo)
+       self.IV = IV
                                
     # get a block from the disk 
-    def get_block(self):
-        if self.block_index >= self.blocks_num:
+    def get_block(self, block_index):
+        if block_index >= self.blocks_num:
             return None
 
         # set and increment the index
-        index = self.block_index
-        self.block_index = self.block_index + 1
+        index = block_index
 
         # get the next block and convert it into int
         p_block = self.blocks[index]
         p_block = int.from_bytes(p_block, "little")
 
         # encrypt the last random number    
-        random_num = self.random_nums[index]
+        random_num = int.to_bytes(self.IV + block_index, self.block_size, "little")
+        random_num = self.e_algo(random_num)
         random_num = int.from_bytes(random_num, "little")
 
         # xor the two numbers and convert it into a bytes object
         c_block = p_block ^ random_num #what to do if the number of bits of number is bigger than block size. 
         c_block = int.to_bytes(c_block, self.block_size, "little")
-        
        
-        return c_block
+        return  c_block
    
     # decrypt a block
     def decrypt_block(self, block):
-        index = self.block_index
-        self.block_index = index + 1
+        index = int.from_bytes(block[:4], "little")
 
-        random_num = self.random_nums[index]
+        random_num = int.to_bytes(self.IV + index, self.block_size, "little")
+        random_num = self.e_algo(random_num)
         random_num = int.from_bytes(random_num, "little")
 
         c_block = int.from_bytes(block, "little")

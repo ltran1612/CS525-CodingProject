@@ -17,21 +17,20 @@ if __name__ == "__main__":
 	# create a ctr object
 	ctr = CTR(IV, block_size, key, e_algo, d_algo)
 	ctr.set_message(original_message)
-	ctr.calculate_xor_nums()
 
 	# get the encryption blocks
-	block_to_send = ctr.get_block()
+	block_to_send = ctr.get_block(0)
 	blocks = []
+	index = 1
 	while block_to_send != None:
 		blocks.append(block_to_send)
 		print("encrypted block: ", block_to_send)
 		#sock.sendto(block_to_send, (UDP_IP, UDP_PORT))
-		block_to_send = ctr.get_block()
+		block_to_send = ctr.get_block(index)
+		index = index + 1
 
 	# decrypt the blocks
 	ctr = CTR(IV, block_size, key, e_algo, d_algo)
-	ctr.set_block_num(len(blocks))
-	ctr.calculate_xor_nums()
 	plain_texts = []
 	for block in blocks:
 		plain_block = ctr.decrypt_block(block)
