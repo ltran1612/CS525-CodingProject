@@ -44,7 +44,7 @@ if __name__ == "__main__":
 			print("")
 			exit(0)
 		algo_code = opt
-		if opt == 2:
+		if algo_code == 2:
 			pass
 		else:
 			cipher = AES.new(key, AES.MODE_ECB)
@@ -73,9 +73,9 @@ if __name__ == "__main__":
 			exit(0)
 		encrypt_code = opt
 		encrypt_mode = None
-		if opt == 2:
+		if encrypt_code == 2:
 			pass
-		elif opt == 3:
+		elif encrypt_code == 3:
 			pass
 		else:
 			# create a cbc object
@@ -137,9 +137,9 @@ if __name__ == "__main__":
 
 		# start sending the cipher blocks
 		start_time = time.perf_counter_ns()
-		if opt == 2:
+		if encrypt_code == 2:
 			pass
-		elif opt == 3:
+		elif encrypt_code == 3:
 			pass
 		else:
 			for i in range(block_nums):

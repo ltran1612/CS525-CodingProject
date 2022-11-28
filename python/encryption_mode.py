@@ -14,9 +14,23 @@ class EncryptionMode:
         self.e_algo = e_algo
         self.d_algo = d_algo
         self.total_block_size = self.block_size + self.numbering_size
+        self.result = {}
 
     def get_size(self):
         return self.blocks_num
+    
+    def get_total_size(self, block_size):
+        return self.numbering_size + block_size
+
+    def get_decrypted_message(self):
+        i = 0
+        p_blocks = []
+        while i in self.result:
+            p_blocks.append(self.result[i].decode("utf-8"))
+            i = i + 1
+        
+        return "".join(p_blocks)
+
 
     # Parse the message in to blocks
     def set_message(self, message):

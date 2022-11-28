@@ -44,10 +44,16 @@ class CBC(EncryptionMode):
 
     # decrypt a block
     def decrypt_block(self, block):
-        index = int.from_bytes(block[:4], "little")
+        index = int.from_bytes(block[:4], "little") 
         c_block = block[4:]
+        
+        while not index in self.cipher_blocks :
+            pass
+
         last_block = self.cipher_blocks[index]
+
         p_block = int.from_bytes(self.d_algo(c_block), "little") ^ int.from_bytes(last_block, "little")
         result = int.to_bytes(p_block, self.block_size, "little")
-        print(result)
+        print("decrypted block", result)
+        self.result[index] = result
         return result
