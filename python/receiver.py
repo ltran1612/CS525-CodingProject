@@ -80,6 +80,7 @@ if __name__ == "__main__":
 
 	
 	if encrypt_code == 2: #OFB
+		#print("OFB")
 		threads = []
 		for i in range(block_nums):
 			block, addr = sock.recvfrom(encrypt_mode.get_total_size(block_size))
@@ -96,6 +97,7 @@ if __name__ == "__main__":
 			thread.join()
 
 	elif encrypt_code == 3:
+		#print("CTR")
 		threads = []
 		for i in range(block_nums):
 			block, addr = sock.recvfrom(encrypt_mode.get_total_size(block_size))
@@ -109,6 +111,7 @@ if __name__ == "__main__":
 		for thread in threads:
 			thread.join()
 	else:
+		#print("CBC")
 		threads = []
 		# create a cbc object
 		for i in range(block_nums):
@@ -137,8 +140,8 @@ if __name__ == "__main__":
 	#print("Original message: ", original_message)
 	# we crop this to remove the paddings
 	print("Are they the same (noted, the decrypted string is cropped to the length of the original message to remove paddings)?", decrypted_message[:len(original_message)] == original_message)
-	with open("receiver.csv", "w") as outfile:
-		outfile.write(str(end_time))
+	with open("receiver.csv", "a") as outfile:
+		outfile.write(str(end_time) + "\n")
 
 	
 
