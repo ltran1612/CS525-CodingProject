@@ -73,9 +73,9 @@ if __name__ == "__main__":
 			exit(0)
 		encrypt_code = opt
 		encrypt_mode = None
-		if encrypt_code == 2:
+		if encrypt_code == 2: #OFB
 			pass
-		elif encrypt_code == 3:
+		elif encrypt_code == 3: #CTR
 			pass
 		else:
 			# create a cbc object

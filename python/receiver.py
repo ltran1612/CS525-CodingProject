@@ -8,6 +8,8 @@ from Crypto.Cipher import AES
 from Crypto import Random
 
 from cbc import *
+from ofb import *
+from ctr import *
 
 def handler(x):
 	print(x, flush=True)
@@ -73,9 +75,23 @@ if __name__ == "__main__":
 	
 	result = []
 
-	end_time = time.perf_counter_ns()
-	if encrypt_code == 2:
-		pass
+	
+	if encrypt_code == 2: #OFB
+		threads = []
+		# create a cbc object
+		for i in range(block_nums):
+			block, addr = sock.recvfrom(encrypt_mode.get_total_size(block_size))
+			encrypt_mode.calculate_xor_nums()
+			
+			try:
+				x = threading.Thread(target=encrypt_mode.decrypt_block, args=(block,))
+				x.start()
+				threads.append(x)
+			except Exception:
+				print("error starting a process")
+		
+		for thread in threads:
+			thread.join()
 	elif encrypt_code == 3:
 		pass
 	else:
@@ -83,7 +99,7 @@ if __name__ == "__main__":
 		# create a cbc object
 		for i in range(block_nums):
 			block, addr = sock.recvfrom(encrypt_mode.get_total_size(block_size))
-			print("cipher blocks", block)
+			#print("cipher blocks", block)
 			encrypt_mode.add_cipher_block(block)
 			
 			try:
@@ -95,8 +111,11 @@ if __name__ == "__main__":
 		
 		for thread in threads:
 			thread.join()
-		print(encrypt_mode.get_decrypted_message())
+		
 	#print(data)
+	time.sleep(10)
+	end_time = time.perf_counter_ns()
+	print(encrypt_mode.get_decrypted_message())
 	with open("receiver.csv", "w") as outfile:
 		outfile.write(str(end_time))
 	
