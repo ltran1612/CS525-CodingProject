@@ -48,5 +48,6 @@ class CTR(EncryptionMode):
         c_block = int.from_bytes(block[4:], "little")
         
         p_block = c_block ^ random_num
-
-        return int.to_bytes(p_block, self.block_size, "little")
+        p_block = int.to_bytes(p_block, self.block_size, "little")
+        self.result[index] = p_block 
+        return p_block

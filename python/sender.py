@@ -7,8 +7,8 @@ from Crypto.Cipher import AES
 from Crypto import Random
 
 from cbc import *
-
-
+from ofb import *
+from ctr import *
 
 if __name__ == "__main__": 
 	UDP_IP = "127.0.0.1"
@@ -20,7 +20,7 @@ if __name__ == "__main__":
 		block_size = None
 		try:
 			# block size
-			block_size = int(input("Enter block size: "))
+			block_size = int(input("Enter block size:\n"))
 		except Exception:
 			print("End of input reading")
 			exit(0)
@@ -51,9 +51,6 @@ if __name__ == "__main__":
 			e_algo = cipher.encrypt
 			d_algo = cipher.decrypt
 		
-		# send these information to the receiver
-
-
 		# pick message
 		message_path = "test_message.txt"
 		
@@ -74,9 +71,9 @@ if __name__ == "__main__":
 		encrypt_code = opt
 		encrypt_mode = None
 		if encrypt_code == 2: #OFB
-			pass
+			encrypt_mode = OFB(IV, block_size, key, e_algo, d_algo)
 		elif encrypt_code == 3: #CTR
-			pass
+			encrypt_mode = CTR(IV, block_size, key, e_algo, d_algo)
 		else:
 			# create a cbc object
 			encrypt_mode = CBC(IV, block_size, key, e_algo, d_algo)
@@ -87,6 +84,8 @@ if __name__ == "__main__":
 		block_nums = encrypt_mode.get_size()
 		#print(block_nums)
 
+		# send these information to the receiver
+	
 		# send block size
 		message = bytearray()
 		for value in int.to_bytes(0, 8, "little"):
@@ -135,12 +134,25 @@ if __name__ == "__main__":
 			message.append(value)
 		sock.sendto(message, (UDP_IP, UDP_PORT))
 
+		# send mesage pat
+		message = bytearray()
+		for value in int.to_bytes(7, 8, "little"):
+			message.append(value)
+		for value in bytes(message_path, "utf-8"):
+			message.append(value)
+		sock.sendto(message, (UDP_IP, UDP_PORT))
+
 		# start sending the cipher blocks
 		start_time = time.perf_counter_ns()
-		if encrypt_code == 2:
-			pass
-		elif encrypt_code == 3:
-			pass
+		if encrypt_code == 2: # OFB
+			encrypt_mode.calculate_xor_nums()
+			for i in range(block_nums):
+				block = encrypt_mode.get_block(i)
+				sock.sendto(block, (UDP_IP, UDP_PORT))
+		elif encrypt_code == 3: # CTR
+			for i in range(block_nums):
+				block = encrypt_mode.get_block(i)
+				sock.sendto(block, (UDP_IP, UDP_PORT))
 		else:
 			for i in range(block_nums):
 				block = encrypt_mode.get_block(i)

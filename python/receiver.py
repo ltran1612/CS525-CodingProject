@@ -1,4 +1,5 @@
-# If we want to be parallel and not just concurrent, we need to use Pool 
+# If we want to be parallel and not just concurrent, we need to use Pool or multiprocessing; that is multiple child processes instead of threads. 
+# However, with multiple processes, we cannot pass our class and the encryption/decryption algorithm to the child processes because they contain pointers that cannot be serialized. 
 import socket
 import time
 import threading
@@ -28,6 +29,7 @@ if __name__ == "__main__":
 	IV = None
 	algo_code = None
 	encrypt_code = None
+	message_path = ""
 
 	# start initializating
 	message_size = 3000000
@@ -43,15 +45,16 @@ if __name__ == "__main__":
 			key = value
 		elif val_code == 3: # algorithm
 			algo_code = int.from_bytes(value, "little")
-			# set the algorithm here
 		elif val_code == 5: # encryption mode
 			encrypt_code = int.from_bytes(value, "little")
 		elif val_code == 6: # blocks num
 			block_nums = int.from_bytes(value, "little")
+		elif val_code == 7: # original message path
+			message_path = value.decode("utf-8")
 		else:
 			print("ERROR: Invalid set up step")
 			exit(1)
-		set_up = key != None and block_size != None and IV != None and algo_code != None and encrypt_code != None and block_nums != None
+		set_up = key != None and block_size != None and IV != None and algo_code != None and encrypt_code != None and block_nums != None and message_path != ""
 	
 	cipher = None
 	e_algo = None
@@ -63,9 +66,9 @@ if __name__ == "__main__":
 	
 	encrypt_mode = None
 	if encrypt_code == 2:
-		pass
+		encrypt_mode = OFB(IV, block_size, key, e_algo, d_algo)
 	elif encrypt_code == 3:
-		pass
+		encrypt_mode = CTR(IV, block_size, key, e_algo, d_algo)
 	else:
 		# create a cbc object
 		encrypt_mode = CBC(IV, block_size, key, e_algo, d_algo)
@@ -78,11 +81,10 @@ if __name__ == "__main__":
 	
 	if encrypt_code == 2: #OFB
 		threads = []
-		# create a cbc object
 		for i in range(block_nums):
 			block, addr = sock.recvfrom(encrypt_mode.get_total_size(block_size))
+			encrypt_mode.set_block_num(block_nums)
 			encrypt_mode.calculate_xor_nums()
-			
 			try:
 				x = threading.Thread(target=encrypt_mode.decrypt_block, args=(block,))
 				x.start()
@@ -92,8 +94,20 @@ if __name__ == "__main__":
 		
 		for thread in threads:
 			thread.join()
+
 	elif encrypt_code == 3:
-		pass
+		threads = []
+		for i in range(block_nums):
+			block, addr = sock.recvfrom(encrypt_mode.get_total_size(block_size))
+			try:
+				x = threading.Thread(target=encrypt_mode.decrypt_block, args=(block,))
+				x.start()
+				threads.append(x)
+			except Exception:
+				print("error starting a process")
+		
+		for thread in threads:
+			thread.join()
 	else:
 		threads = []
 		# create a cbc object
@@ -115,8 +129,16 @@ if __name__ == "__main__":
 	#print(data)
 	time.sleep(10)
 	end_time = time.perf_counter_ns()
-	print(encrypt_mode.get_decrypted_message())
+	decrypted_message = encrypt_mode.get_decrypted_message()
+	original_message = ""
+	with open(message_path) as f:
+			original_message = "\n".join(f.readlines())
+	#print("Decrypted message: ", decrypted_message)
+	#print("Original message: ", original_message)
+	# we crop this to remove the paddings
+	print("Are they the same (noted, the decrypted string is cropped to the length of the original message to remove paddings)?", decrypted_message[:len(original_message)] == original_message)
 	with open("receiver.csv", "w") as outfile:
 		outfile.write(str(end_time))
+
 	
 

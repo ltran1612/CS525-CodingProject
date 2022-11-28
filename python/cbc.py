@@ -54,6 +54,6 @@ class CBC(EncryptionMode):
 
         p_block = int.from_bytes(self.d_algo(c_block), "little") ^ int.from_bytes(last_block, "little")
         result = int.to_bytes(p_block, self.block_size, "little")
-        print("decrypted block", result)
+        #print("decrypted block", result)
         self.result[index] = result
         return result
