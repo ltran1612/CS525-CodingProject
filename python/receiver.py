@@ -13,31 +13,60 @@ if __name__ == "__main__":
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
 	sock.bind((UDP_IP, UDP_PORT))
 
-	# initialization
-	# set_up = False
-	# key = None
-	# block_size = None
-	# IV = None
-	# e_algo = ""
-	# d_algo = ""
-	# while not set_up:
-	# 	data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-	# 	value, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-	# 	if data == "key":
-	# 		key = value
-	# 	elif data == "block_size":
-	# 		block_size = int(value)
-	# 	elif data == "IV":
-	# 		IV = int(value)
-	# 	else:
-	# 		print("ERROR: Invalid set up step")
-	# 		exit(1)
-	# 	set_up = key != None and block_size != None and IV != None
+	#initialization
+	set_up = False
+	key = None
+	block_size = None
+	block_nums = None
+	IV = None
+	algo_code = None
+	encrypt_code = None
 
-	data, addr = sock.recvfrom(4) # buffer size is 4 bytes
-	data = int.from_bytes(data, "little")
+	# start initializating
+	message_size = 3000000
+	while not set_up:
+		data, addr = sock.recvfrom(message_size) # buffer size is 1024 bytes
+		val_code = int.from_bytes(data[:8], "little")
+		value = data[8:]
+		if val_code == 0: # block size
+			block_size = int.from_bytes(value, "little")
+		elif val_code == 1: # IV
+			IV = value
+		elif val_code == 2: # key
+			key = value
+		elif val_code == 3: # algorithm
+			algo_code = int.from_bytes(value, "little")
+			# set the algorithm here
+		elif val_code == 5: # encryption mode
+			encrypt_code = int.from_bytes(value, "little")
+		elif val_code == 6: # blocks num
+			block_nums = int.from_bytes(value, "little")
+		else:
+			print("ERROR: Invalid set up step")
+			exit(1)
+		set_up = key != None and block_size != None and IV != None and algo_code != None and encrypt_code != None and block_nums != None
+	
+	cipher = None
+	e_algo = None
+	d_algo = None
+	if algo_code == 1:
+		cipher = AES.new(key, AES.MODE_ECB)
+		e_algo = cipher.encrypt
+		d_algo = cipher.decrypt 
+	
+	encrypt_mode = None
+	if encrypt_code == 2:
+		pass
+	elif encrypt_code == 3:
+		pass
+	else:
+		# create a cbc object
+		encrypt_mode = CBC(IV, block_size, key, e_algo, d_algo)
+	
+	print("set up done")
+
 	end_time = time.perf_counter_ns()
 	#print(data)
 	with open("receiver.csv", "w") as outfile:
-		outfile.write(end_time)
+		outfile.write(str(end_time))
 	

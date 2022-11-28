@@ -9,7 +9,7 @@ class CBC(EncryptionMode):
     # d_algo: the decryption algorithm function
     def __init__(self, IV, block_size, key, e_algo, d_algo):
        super().__init__(IV, block_size, key, e_algo, d_algo)
-       self.cipher_block = [IV]
+       self.cipher_blocks = {0: IV}
 
     # get a block from the disk 
     def get_block(self, block_index):
@@ -24,7 +24,7 @@ class CBC(EncryptionMode):
         p_block = int.from_bytes(p_block, "little")
 
         # get the last block and convert it into int
-        last_block = int.from_bytes(self.cipher_block[index], "little")
+        last_block = int.from_bytes(self.cipher_blocks[index], "little")
 
         # xor the two numbers and convert it into a bytes object
         c_block = p_block ^ last_block #what to do if the number of bits of number is bigger than block size. 
@@ -34,19 +34,20 @@ class CBC(EncryptionMode):
         c_block = self.e_algo(c_block)
 
         # add a new cipher text block
-        self.cipher_block.append(c_block)
+        self.cipher_blocks[index + 1] = c_block
        
         return self.add_index_to_block(c_block, block_index)
    
     def add_cipher_block(self, block):
-        index = int.from_bytes(block[:4])
-        self.cipher_block.insert(index, block[4:])
+        index = int.from_bytes(block[:4], "little")
+        self.cipher_blocks[index+1] = block[4:]
 
     # decrypt a block
     def decrypt_block(self, block):
-        index = int.from_bytes(block[:4])
+        index = int.from_bytes(block[:4], "little")
         c_block = block[4:]
         last_block = self.cipher_blocks[index]
         p_block = int.from_bytes(self.d_algo(c_block), "little") ^ int.from_bytes(last_block, "little")
         result = int.to_bytes(p_block, self.block_size, "little")
+        print(result)
         return result

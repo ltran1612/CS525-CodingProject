@@ -34,6 +34,8 @@ if __name__ == "__main__":
 	plain_texts = []
 	index = 0
 	for block in blocks:
+		print("decrypting block", block)
+		cbc.add_cipher_block(block)
 		plain_block = cbc.decrypt_block(block)
 		print("decrypted block",plain_block)
 		message = plain_block.decode("utf-8")

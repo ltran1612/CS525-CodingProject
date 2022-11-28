@@ -14,14 +14,16 @@ if __name__ == "__main__":
 	UDP_IP = "127.0.0.1"
 	UDP_PORT = 8080
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+	sock.setblocking(False)
 
-
-	while True:	
+	while True:
+		block_size = None
 		try:
 			# block size
 			block_size = int(input("Enter block size: "))
 		except Exception:
-			print("")
+			print("End of input reading")
+			exit(0)
 		
 		# set up other parameters
 		IV = Random.new().read(block_size) # IV
@@ -31,32 +33,45 @@ if __name__ == "__main__":
 		cipher = AES.new(key, AES.MODE_ECB)
 		e_algo = cipher.encrypt
 		d_algo = cipher.decrypt
-
-		opt = int(input("""Pick the encryption algorithm from the following list:
+		
+		opt = None
+		try:
+			opt = int(input("""Pick the encryption algorithm from the following list:
 		1) AES (default)
-		2) ...
+		2) RSA
 		"""))
-
-		if opt == 1:
+		except Exception:
+			print("")
+			exit(0)
+		algo_code = opt
+		if opt == 2:
+			pass
+		else:
 			cipher = AES.new(key, AES.MODE_ECB)
 			e_algo = cipher.encrypt
 			d_algo = cipher.decrypt
-		else:
-			print("Other option not available")
 		
 		# send these information to the receiver
 
 
 		# pick message
-		original_message = "helllo there my name is long, nice to meet you, hallo, dance, think before you do, be bold, code the future, power, sing, song 123"
+		message_path = "test_message.txt"
+		
+		original_message = ""
+		with open(message_path) as f:
+			original_message = "\n".join(f.readlines())
 		
 		# pick cipher mode
-		opt = int(input("""Pick the cipher mode from the following list: 
-		1) CBC (default)
-		2) OFB
-		3) CTR
-		"""))
-
+		try:
+			opt = int(input("""Pick the cipher mode from the following list: 
+			1) CBC (default)
+			2) OFB
+			3) CTR
+			"""))
+		except Exception:
+			print("")
+			exit(0)
+		encrypt_code = opt
 		encrypt_mode = None
 		if opt == 2:
 			pass
@@ -64,28 +79,74 @@ if __name__ == "__main__":
 			pass
 		else:
 			# create a cbc object
-			cbc = CBC(IV, block_size, key, e_algo, d_algo)
-			cbc.set_message(original_message)
-
+			encrypt_mode = CBC(IV, block_size, key, e_algo, d_algo)
+			
+		# set the message
+		encrypt_mode.set_message(original_message)
 		# set the message size
 		block_nums = encrypt_mode.get_size()
 		#print(block_nums)
 
-		start_time = time.perf_counter_ns()
-		# do stuffs here
-		# get the encryption blocks
-		# block_to_send = cbc.get_block(0)
-		# index = 1
-		# while block_to_send != None:
-		# 	print("encrypted block: ", block_to_send)
-		# 	sock.sendto(block_to_send, (UDP_IP, UDP_PORT))
-		# 	block_to_send = cbc.get_block(index)
-		# 	index = index + 1
-		# send the message size
-		sock.sendto(int.to_bytes(block_nums, 4, "little"), (UDP_IP, UDP_PORT))
+		# send block size
+		message = bytearray()
+		for value in int.to_bytes(0, 8, "little"):
+			message.append(value)
+		for value in int.to_bytes(block_size, 8, "little"):
+			message.append(value)
+		sock.sendto(message, (UDP_IP, UDP_PORT))
 
+		# send IV
+		message = bytearray()
+		for value in int.to_bytes(1, 8, "little"):
+			message.append(value)
+		for value in IV:
+			message.append(value)
+		sock.sendto(message, (UDP_IP, UDP_PORT))
+
+		# send key
+		message = bytearray()
+		for value in int.to_bytes(2, 8, "little"):
+			message.append(value)
+		for value in key:
+			message.append(value)
+		sock.sendto(message, (UDP_IP, UDP_PORT))
+
+		# send algorithm option
+		message = bytearray()
+		for value in int.to_bytes(3, 8, "little"):
+			message.append(value)
+		for value in int.to_bytes(algo_code, 8, "little"):
+			message.append(value)
+		sock.sendto(message, (UDP_IP, UDP_PORT))
+
+		# send cipher mode
+		message = bytearray()
+		for value in int.to_bytes(5, 8, "little"):
+			message.append(value)
+		for value in int.to_bytes(encrypt_code, 8, "little"):
+			message.append(value)
+		sock.sendto(message, (UDP_IP, UDP_PORT))
+		
+		# send blocks number
+		message = bytearray()
+		for value in int.to_bytes(6, 8, "little"):
+			message.append(value)
+		for value in int.to_bytes(block_nums, 8, "little"):
+			message.append(value)
+		sock.sendto(message, (UDP_IP, UDP_PORT))
+
+		# start sending the cipher blocks
+		start_time = time.perf_counter_ns()
+		if opt == 2:
+			pass
+		elif opt == 3:
+			pass
+		else:
+			for i in range(block_nums):
+				block = encrypt_mode.get_block(i)
+				sock.sendto(block, (UDP_IP, UDP_PORT))
 		with open("sender.csv", "w") as outfile:
-			outfile.write(start_time)
+			outfile.write(str(start_time))
 	
 
 			
