@@ -22,6 +22,7 @@ class CBC(EncryptionMode):
         # get the next block and convert it into int
         p_block = self.blocks[index]
         p_block = int.from_bytes(p_block, "little")
+        #print("last block", len(last_block))
 
         # get the last block and convert it into int
         last_block = int.from_bytes(self.cipher_blocks[index], "little")
@@ -30,6 +31,7 @@ class CBC(EncryptionMode):
         c_block = p_block ^ last_block #what to do if the number of bits of number is bigger than block size. 
         c_block = int.to_bytes(c_block, self.block_size, "little")
 
+        #print("c block length", len(c_block))
         # run the encryption algorithm on the bytes object
         c_block = self.e_algo(c_block)
 

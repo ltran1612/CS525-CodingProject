@@ -5,8 +5,9 @@ import time
 import threading
 
 from termios import CKILL
-from Crypto.Cipher import AES
+from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto import Random
+from Crypto.PublicKey import RSA
 
 from cbc import *
 from ofb import *
@@ -62,14 +63,33 @@ if __name__ == "__main__":
 	if algo_code == 1:
 		cipher = AES.new(key, AES.MODE_ECB)
 		e_algo = cipher.encrypt
-		d_algo = cipher.decrypt 
+		d_algo = cipher.decrypt
+
+		if block_size != 16:
+			print("The AES used in this experiment does not support other block sizes other than 16")
+	else:
+		print("Invalid input")
+		exit(1)
+		public_key = None
+		private_key = None
+		with open("public.pem") as f:
+			public_key = RSA.import_key(f.read())
+		with open("private.pem") as f:
+			private_key = RSA.import_key(f.read())
+		cipher = PKCS1_OAEP.new(public_key)
+		e_algo = cipher.encrypt
+		cipher = PKCS1_OAEP.new(private_key)
+		d_algo = cipher.decrypt
 	
 	encrypt_mode = None
 	if encrypt_code == 2:
+		print("OFB")
 		encrypt_mode = OFB(IV, block_size, key, e_algo, d_algo)
 	elif encrypt_code == 3:
+		print("CTR")
 		encrypt_mode = CTR(IV, block_size, key, e_algo, d_algo)
 	else:
+		print("CBC")
 		# create a cbc object
 		encrypt_mode = CBC(IV, block_size, key, e_algo, d_algo)
 	

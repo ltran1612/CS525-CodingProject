@@ -43,7 +43,7 @@ class EncryptionMode:
             num_b = int.from_bytes(block, "little")
             block = num_b | block_of_0
             block = int.to_bytes(block, self.block_size, "little")
-            print("message block", block)
+            #print("message block", block)
             self.blocks.append(block)
         
         self.blocks_num = len(self.blocks)

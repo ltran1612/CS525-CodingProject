@@ -3,8 +3,9 @@ import socket
 import time
 import sys
 
-from Crypto.Cipher import AES
+from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto import Random
+from Crypto.PublicKey import RSA
 
 from cbc import *
 from ofb import *
@@ -33,22 +34,40 @@ if __name__ == "__main__":
 	e_algo = cipher.encrypt
 	d_algo = cipher.decrypt
 	
+	
 	opt = None
 	try:
-		opt = int(input("""Pick the encryption algorithm from the following list:
+		opt = int(input(
+"""Pick the encryption algorithm from the following list:
 	1) AES (default)
-	2) RSA
-	"""))
+"""))
 	except Exception:
 		print("")
 		exit(0)
 	algo_code = opt
 	if algo_code == 2:
-		pass
+		print("Invalid input")
+		exit(1)
+		key = RSA.generate(2048)
+		keys = (key, key.public_key())
+
+		with open("private.pem", "wb") as f:
+			f.write(keys[0].export_key())
+		
+		with open("public.pem", "wb") as f:
+			f.write(keys[1].export_key())
+
+		cipher = PKCS1_OAEP.new(keys[1])
+		e_algo = cipher.encrypt
+		cipher = PKCS1_OAEP.new(keys[0])
+		d_algo = cipher.decrypt
+		key = b'0'
 	else:
+		key = Random.new().read(32)
 		cipher = AES.new(key, AES.MODE_ECB)
 		e_algo = cipher.encrypt
 		d_algo = cipher.decrypt
+		
 	
 	# pick message
 	message_path = "test_message.txt"
@@ -59,11 +78,12 @@ if __name__ == "__main__":
 	
 	# pick cipher mode
 	try:
-		opt = int(input("""Pick the cipher mode from the following list: 
-		1) CBC (default)
-		2) OFB
-		3) CTR
-		"""))
+		opt = int(input(
+"""Pick the cipher mode from the following list: 
+	1) CBC (default)
+	2) OFB
+	3) CTR
+"""))
 	except Exception:
 		print("")
 		exit(0)
