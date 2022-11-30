@@ -102,10 +102,11 @@ if __name__ == "__main__":
 	if encrypt_code == 2: #OFB
 		#print("OFB")
 		threads = []
+		encrypt_mode.set_block_num(block_nums)
+		encrypt_mode.calculate_xor_nums()
 		for i in range(block_nums):
 			block, addr = sock.recvfrom(encrypt_mode.get_total_size(block_size))
-			encrypt_mode.set_block_num(block_nums)
-			encrypt_mode.calculate_xor_nums()
+			
 			try:
 				x = threading.Thread(target=encrypt_mode.decrypt_block, args=(block,))
 				x.start()
