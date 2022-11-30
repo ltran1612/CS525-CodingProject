@@ -19,6 +19,9 @@ class OFB(EncryptionMode):
             num = self.e_algo(num)
             self.random_nums.append(num)
     
+    def get_random_nums(self):
+        return self.random_nums
+    
     def set_block_num(self, num):
         self.blocks_num = num
                                

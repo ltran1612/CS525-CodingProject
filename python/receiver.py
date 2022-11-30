@@ -3,6 +3,7 @@
 import socket
 import time
 import threading
+from multiprocessing import Pool
 
 from termios import CKILL
 from Crypto.Cipher import AES, PKCS1_OAEP
@@ -15,6 +16,19 @@ from ctr import *
 
 def handler(x):
 	print(x, flush=True)
+
+def decrypt_block_ofb_multiprocess(block, random_nums, block_size):
+	index = int.from_bytes(block[:4], "little")
+
+	random_num = random_nums[index]
+	random_num = int.from_bytes(random_num, "little")
+
+	c_block = int.from_bytes(block[4:], "little")
+	
+	p_block = c_block ^ random_num
+	p_block = int.to_bytes(p_block, block_size, "little")
+
+	return p_block
 
 if __name__ == "__main__": 
 	UDP_IP = "127.0.0.1"
@@ -95,28 +109,36 @@ if __name__ == "__main__":
 	
 	print("set up done")
 
-	
-	result = []
-
-	
+	decrypted_message = ""
 	if encrypt_code == 2: #OFB
 		#print("OFB")
-		threads = []
+		#threads = []
+		results = [None] * block_nums
 		encrypt_mode.set_block_num(block_nums)
 		encrypt_mode.calculate_xor_nums()
+		random_nums = encrypt_mode.get_random_nums()
+		pool = Pool()
 		for i in range(block_nums):
 			block, addr = sock.recvfrom(encrypt_mode.get_total_size(block_size))
 			
 			try:
-				x = threading.Thread(target=encrypt_mode.decrypt_block, args=(block,))
-				x.start()
-				threads.append(x)
+				x = pool.apply_async(decrypt_block_ofb_multiprocess, (block, random_nums, block_size)) #threading.Thread(target=encrypt_mode.decrypt_block, args=(block,))
+				#x.start()
+				#threads.append(x)
+				results[i] = x
 			except Exception:
 				print("error starting a process")
 		
-		for thread in threads:
-			thread.join()
-
+		# for thread in threads:
+		# 	thread.join()
+		pool.close()
+		pool.join()
+		plaintexts = []
+		for i in range(block_nums):
+			plaintext = results[i].get()
+			plaintexts.append(plaintext.decode("utf-8"))
+		decrypted_message = "".join(plaintexts)
+		#print(decrypted_message)
 	elif encrypt_code == 3:
 		#print("CTR")
 		threads = []
@@ -131,6 +153,7 @@ if __name__ == "__main__":
 		
 		for thread in threads:
 			thread.join()
+		decrypted_message = encrypt_mode.get_decrypted_message()
 	else:
 		#print("CBC")
 		threads = []
@@ -149,11 +172,10 @@ if __name__ == "__main__":
 		
 		for thread in threads:
 			thread.join()
-		
+		decrypted_message = encrypt_mode.get_decrypted_message()
 	#print(data)
 	time.sleep(10)
 	end_time = time.perf_counter_ns()
-	decrypted_message = encrypt_mode.get_decrypted_message()
 	original_message = ""
 	with open(message_path) as f:
 			original_message = "\n".join(f.readlines())
