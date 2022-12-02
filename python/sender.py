@@ -74,6 +74,7 @@ if __name__ == "__main__":
 	if block_size % algo_block_size != 0:
 		block_size = block_size + 16 - block_size % algo_block_size
 	
+	print("block size is", block_size)
 	IV = Random.new().read(block_size) # IV
 		
 		
@@ -189,10 +190,18 @@ if __name__ == "__main__":
 	if encrypt_code == 2: # OFB
 		for i in range(block_nums):
 			block = encrypt_mode.get_block(i)
+			# try:
+			# 	print(block.decode("utf-8"))
+			# except UnicodeDecodeError:
+			# 	print("cannot decode")
 			sock.sendto(block, (UDP_IP, UDP_PORT))
 	elif encrypt_code == 3: # CTR
 		for i in range(block_nums):
 			block = encrypt_mode.get_block(i)
+			# try:
+			# 	print(block.decode("utf-8"))
+			# except UnicodeDecodeError:
+			# 	print("cannot decode")
 			sock.sendto(block, (UDP_IP, UDP_PORT))
 	else: # CBC
 		for i in range(block_nums):

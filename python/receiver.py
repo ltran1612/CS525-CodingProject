@@ -128,6 +128,7 @@ if __name__ == "__main__":
 		encrypt_mode.calculate_xor_nums()
 		random_nums = encrypt_mode.get_random_nums()
 	print("set up done")
+	print(block_nums)
 	# set up done
 	# report back to the sender
 	# tell them to start sending data
@@ -166,7 +167,7 @@ if __name__ == "__main__":
 		pool = Pool()
 		for i in range(block_nums):
 			block, addr = sock.recvfrom(encrypt_mode.get_total_size(block_size))
-			
+			print(i)
 			try:
 				x = pool.apply_async(decrypt_block_ctr_multiprocess, (block, random_nums, block_size)) 
 				results[i] = x
@@ -175,8 +176,10 @@ if __name__ == "__main__":
 		
 		# close the pool
 		pool.close()
+		#print("waiting")
 		# join the pool
 		pool.join()
+		
 		plaintexts = [None] * block_nums
 
 		# organizing values

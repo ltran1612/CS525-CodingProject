@@ -9,15 +9,20 @@ class OFB(EncryptionMode):
     # key: the key to the encryption and decryption algorithm
     # e_algo: the encryption algorithm function
     # d_algo: the decryption algorithm function
-    def __init__(self, IV, block_size, key, e_algo, d_algo):
-        super().__init__(IV, block_size, key, e_algo, d_algo)
+    def __init__(self, IV, block_size, key, e_algo, d_algo, algo_block_size):
+        super().__init__(IV, block_size, key, e_algo, d_algo, algo_block_size)
         self.random_nums = [IV]
     
     def calculate_xor_nums(self):
         for i in range(1, self.blocks_num):
             num = self.random_nums[i-1]
-            num = self.e_algo(num)
-            self.random_nums.append(num)
+            rb = [num[i:i + self.algo_block_size] for i in range(0, len(num), self.algo_block_size)]
+            num = bytearray()
+            for value in rb:
+                temp = self.e_algo(value)
+                for value in temp:
+                    num.append(value)
+            self.random_nums.append(bytes(num))
     
     def get_random_nums(self):
         return self.random_nums

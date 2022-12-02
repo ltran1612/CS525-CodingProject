@@ -62,7 +62,7 @@ class CBC(EncryptionMode):
         
         while index not in self.cipher_blocks :
             #sleep(10)
-            print('waiting for', index)
+            #print('waiting for', index)
             pass
         
         last_block = self.cipher_blocks[index]
