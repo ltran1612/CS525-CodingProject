@@ -167,7 +167,7 @@ if __name__ == "__main__":
 		pool = Pool()
 		for i in range(block_nums):
 			block, addr = sock.recvfrom(encrypt_mode.get_total_size(block_size))
-			print(i)
+			#print(i)
 			try:
 				x = pool.apply_async(decrypt_block_ctr_multiprocess, (block, random_nums, block_size)) 
 				results[i] = x
