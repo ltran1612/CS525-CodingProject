@@ -46,10 +46,11 @@ if __name__ == "__main__":
 	encrypt_code = None
 	message_path = ""
 
+	sender_address = ""
 	# start initializating
 	message_size = 3000000
 	while not set_up:
-		data, addr = sock.recvfrom(message_size) # buffer size is 1024 bytes
+		data, sender_address = sock.recvfrom(message_size) # buffer size is 1024 bytes
 		val_code = int.from_bytes(data[:8], "little")
 		value = data[8:]
 		if val_code == 0: # block size
@@ -108,7 +109,9 @@ if __name__ == "__main__":
 		encrypt_mode = CBC(IV, block_size, key, e_algo, d_algo)
 	
 	print("set up done")
-
+	
+	sock.sendto(int.to_bytes(1, 1, "little"), sender_address)
+	# tell them to start sending data
 	decrypted_message = ""
 	if encrypt_code == 2: #OFB
 		#print("OFB")

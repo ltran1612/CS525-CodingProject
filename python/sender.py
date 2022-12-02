@@ -161,6 +161,16 @@ if __name__ == "__main__":
 		message.append(value)
 	sock.sendto(message, (UDP_IP, UDP_PORT))
 
+	sock.setblocking(True)
+	value, addr = sock.recvfrom(1024)
+	value = int.from_bytes(value, "little")
+	if value == 1:
+		print("set up successful")
+		sock.setblocking(False)
+	else:
+		print("set up failed")
+		exit(1)
+
 	# start sending the cipher blocks
 	start_time = time.perf_counter_ns()
 	if encrypt_code == 2: # OFB
