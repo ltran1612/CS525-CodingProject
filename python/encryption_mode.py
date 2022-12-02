@@ -5,7 +5,10 @@ class EncryptionMode:
     # key: the key to the encryption and decryption algorithm
     # e_algo: the encryption algorithm function
     # d_algo: the decryption algorithm function
-    def __init__(self, IV, block_size, key, e_algo, d_algo):
+    def __init__(self, IV, block_size, key, e_algo, d_algo, algo_block_size):
+        if block_size % algo_block_size != 0:
+            print("Block size must be a multiple of algo_block_size")
+            return
         self.numbering_size = 4
         self.blocks = []
         self.blocks_num = 0
@@ -13,9 +16,10 @@ class EncryptionMode:
         self.key = key
         self.e_algo = e_algo
         self.d_algo = d_algo
-        self.total_block_size = self.block_size + self.numbering_size
         self.result = {}
-
+        self.algo_block_size = algo_block_size
+        self.total_block_size = self.get_total_size(self.block_size)
+        
     def get_size(self):
         return self.blocks_num
     

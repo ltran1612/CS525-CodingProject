@@ -9,10 +9,30 @@ class CTR(EncryptionMode):
     # key: the key to the encryption and decryption algorithm
     # e_algo: the encryption algorithm function
     # d_algo: the decryption algorithm function
-    def __init__(self, IV, block_size, key, e_algo, d_algo):
-       super().__init__(IV, block_size, key, e_algo, d_algo)
+    def __init__(self, IV, block_size, key, e_algo, d_algo, algo_block_size):
+       super().__init__(IV, block_size, key, e_algo, d_algo, algo_block_size)
        self.IV = IV
        self.IV_num = int.from_bytes(IV, "little")
+       self.random_nums = []
+    
+    def calculate_xor_nums(self):
+        for i in range(0, self.blocks_num):
+            random_num = int.to_bytes(self.IV_num + i, self.block_size, "little")
+
+            rb = [random_num[i:i + self.algo_block_size] for i in range(0, len(random_num), self.algo_block_size)]
+            random_num = bytearray()
+            for value in rb:
+                temp = self.e_algo(value)
+                for value in temp:
+                    random_num.append(value)
+            self.random_nums.append(bytes(random_num))
+    
+    def get_random_nums(self):
+        return self.random_nums
+    
+    def set_block_num(self, num):
+        self.blocks_num = num
+                               
                                
     # get a block from the disk 
     def get_block(self, block_index):
