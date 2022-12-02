@@ -90,13 +90,12 @@ if __name__ == "__main__":
 	cipher = None
 	e_algo = None
 	d_algo = None
+	algo_block_size = None
 	if algo_code == 1:
 		cipher = AES.new(key, AES.MODE_ECB)
 		e_algo = cipher.encrypt
 		d_algo = cipher.decrypt
-
-		if block_size != 16:
-			print("The AES used in this experiment does not support other block sizes other than 16")
+		algo_block_size = 16
 	else: # meant for RSA, but we was not able to do it in RSA
 		print("Invalid input")
 		exit(1)
@@ -114,14 +113,14 @@ if __name__ == "__main__":
 	encrypt_mode = None
 	if encrypt_code == 2:
 		print("OFB")
-		encrypt_mode = OFB(IV, block_size, key, e_algo, d_algo)
+		encrypt_mode = OFB(IV, block_size, key, e_algo, d_algo, algo_block_size)
 	elif encrypt_code == 3:
 		print("CTR")
-		encrypt_mode = CTR(IV, block_size, key, e_algo, d_algo)
+		encrypt_mode = CTR(IV, block_size, key, e_algo, d_algo, algo_block_size)
 	else:
 		print("CBC")
 		# create a cbc object
-		encrypt_mode = CBC(IV, block_size, key, e_algo, d_algo)
+		encrypt_mode = CBC(IV, block_size, key, e_algo, d_algo, algo_block_size)
 	
 	random_nums = None
 	if encrypt_code == 2 or encrypt_code == 3: #OFB
@@ -199,6 +198,7 @@ if __name__ == "__main__":
 			except Exception:
 				print("error starting a process")
 		# wait for threads to finish
+		#print("waiting for")
 		for thread in threads:
 			thread.join()
 		

@@ -27,12 +27,13 @@ if __name__ == "__main__":
 	
 	# default algorithm is AES
 	# set up other parameters
-	IV = Random.new().read(block_size) # IV
+	
 	key = Random.new().read(32) # key for the encryption
 	# pick the encryption algorithm
 	cipher = AES.new(key, AES.MODE_ECB)
 	e_algo = cipher.encrypt
 	d_algo = cipher.decrypt
+	algo_block_size = 16
 	
 	
 	opt = None
@@ -67,9 +68,14 @@ if __name__ == "__main__":
 		cipher = AES.new(key, AES.MODE_ECB)
 		e_algo = cipher.encrypt
 		d_algo = cipher.decrypt
+		algo_block_size = 16
 
-		if block_size != 16:
-			print("The AES used in this experiment does not support other block sizes other than 16")
+	
+	if block_size % algo_block_size != 0:
+		block_size = block_size + 16 - block_size % algo_block_size
+	
+	IV = Random.new().read(block_size) # IV
+		
 		
 	# test message is in test_message.txt
 	message_path = "test_message.txt"
@@ -94,11 +100,11 @@ if __name__ == "__main__":
 	encrypt_code = opt
 	encrypt_mode = None
 	if encrypt_code == 2: #OFB
-		encrypt_mode = OFB(IV, block_size, key, e_algo, d_algo)
+		encrypt_mode = OFB(IV, block_size, key, e_algo, d_algo, algo_block_size)
 	elif encrypt_code == 3: #CTR
-		encrypt_mode = CTR(IV, block_size, key, e_algo, d_algo)
+		encrypt_mode = CTR(IV, block_size, key, e_algo, d_algo, algo_block_size)
 	else: # CBC
-		encrypt_mode = CBC(IV, block_size, key, e_algo, d_algo)
+		encrypt_mode = CBC(IV, block_size, key, e_algo, d_algo, algo_block_size)
 		
 	# set the message
 	encrypt_mode.set_message(original_message)
@@ -178,6 +184,7 @@ if __name__ == "__main__":
 		encrypt_mode.calculate_xor_nums()
 		
 	# start sending the cipher blocks
+
 	start_time = time.perf_counter_ns()
 	if encrypt_code == 2: # OFB
 		for i in range(block_nums):
@@ -190,7 +197,7 @@ if __name__ == "__main__":
 	else: # CBC
 		for i in range(block_nums):
 			block = encrypt_mode.get_block(i)
-			sock.sendto(block, (UDP_IP, UDP_PORT))
+			result = sock.sendto(block, (UDP_IP, UDP_PORT))
 	
 	# write the start time
 	with open("sender.csv", "a") as outfile:
