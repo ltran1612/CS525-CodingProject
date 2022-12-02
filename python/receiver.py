@@ -27,8 +27,23 @@ def decrypt_block_ofb_multiprocess(block, random_nums, block_size):
 	
 	p_block = c_block ^ random_num
 	p_block = int.to_bytes(p_block, block_size, "little")
+	p_block = p_block.decode("utf-8")
 
-	return p_block
+	return p_block, index
+
+def decrypt_block_ctr_multiprocess(block, random_nums, block_size):
+	index = int.from_bytes(block[:4], "little")
+
+	random_num = random_nums[index]
+	random_num = int.from_bytes(random_num, "little")
+
+	c_block = int.from_bytes(block[4:], "little")
+	
+	p_block = c_block ^ random_num
+	p_block = int.to_bytes(p_block, block_size, "little")
+	p_block = p_block.decode("utf-8")
+
+	return p_block, index
 
 if __name__ == "__main__": 
 	UDP_IP = "127.0.0.1"
@@ -82,7 +97,7 @@ if __name__ == "__main__":
 
 		if block_size != 16:
 			print("The AES used in this experiment does not support other block sizes other than 16")
-	else:
+	else: # meant for RSA, but we was not able to do it in RSA
 		print("Invalid input")
 		exit(1)
 		public_key = None
@@ -108,62 +123,73 @@ if __name__ == "__main__":
 		# create a cbc object
 		encrypt_mode = CBC(IV, block_size, key, e_algo, d_algo)
 	
-	print("set up done")
-	
-	sock.sendto(int.to_bytes(1, 1, "little"), sender_address)
-	# tell them to start sending data
-	decrypted_message = ""
-	if encrypt_code == 2: #OFB
-		#print("OFB")
-		#threads = []
-		results = [None] * block_nums
+	random_nums = None
+	if encrypt_code == 2 or encrypt_code == 3: #OFB
 		encrypt_mode.set_block_num(block_nums)
 		encrypt_mode.calculate_xor_nums()
 		random_nums = encrypt_mode.get_random_nums()
+	print("set up done")
+	# set up done
+	# report back to the sender
+	# tell them to start sending data
+	sock.sendto(int.to_bytes(1, 1, "little"), sender_address)
+
+	# waiting for data
+	decrypted_message = ""
+	if encrypt_code == 2: #OFB
+		results = [None] * block_nums
+
 		pool = Pool()
 		for i in range(block_nums):
 			block, addr = sock.recvfrom(encrypt_mode.get_total_size(block_size))
 			
 			try:
-				x = pool.apply_async(decrypt_block_ofb_multiprocess, (block, random_nums, block_size)) #threading.Thread(target=encrypt_mode.decrypt_block, args=(block,))
-				#x.start()
-				#threads.append(x)
+				x = pool.apply_async(decrypt_block_ofb_multiprocess, (block, random_nums, block_size)) 
 				results[i] = x
 			except Exception:
 				print("error starting a process")
 		
-		# for thread in threads:
-		# 	thread.join()
+		# close the pool
 		pool.close()
+		# wait for the threads to finish
 		pool.join()
-		plaintexts = []
+		plaintexts = [None] * block_nums
+
+		# we're done
+		# organize the plaintexts blocks
 		for i in range(block_nums):
-			plaintext = results[i].get()
-			plaintexts.append(plaintext.decode("utf-8"))
+			plaintext, index = results[i].get()
+			plaintexts[index] = plaintext
 		decrypted_message = "".join(plaintexts)
-		#print(decrypted_message)
-	elif encrypt_code == 3:
-		#print("CTR")
-		threads = []
+	elif encrypt_code == 3: # CTR
+		results = [None] * block_nums
+
+		pool = Pool()
 		for i in range(block_nums):
 			block, addr = sock.recvfrom(encrypt_mode.get_total_size(block_size))
+			
 			try:
-				x = threading.Thread(target=encrypt_mode.decrypt_block, args=(block,))
-				x.start()
-				threads.append(x)
+				x = pool.apply_async(decrypt_block_ctr_multiprocess, (block, random_nums, block_size)) 
+				results[i] = x
 			except Exception:
 				print("error starting a process")
 		
-		for thread in threads:
-			thread.join()
-		decrypted_message = encrypt_mode.get_decrypted_message()
-	else:
-		#print("CBC")
+		# close the pool
+		pool.close()
+		# join the pool
+		pool.join()
+		plaintexts = [None] * block_nums
+
+		# organizing values
+		for i in range(block_nums):
+			plaintext, index = results[i].get()
+			plaintexts[index] = plaintext
+		decrypted_message = "".join(plaintexts)
+	else: # CBC
 		threads = []
 		# create a cbc object
 		for i in range(block_nums):
 			block, addr = sock.recvfrom(encrypt_mode.get_total_size(block_size))
-			#print("cipher blocks", block)
 			encrypt_mode.add_cipher_block(block)
 			
 			try:
@@ -172,20 +198,24 @@ if __name__ == "__main__":
 				threads.append(x)
 			except Exception:
 				print("error starting a process")
-		
+		# wait for threads to finish
 		for thread in threads:
 			thread.join()
+		
+		# get the message
 		decrypted_message = encrypt_mode.get_decrypted_message()
-	#print(data)
-	time.sleep(10)
+
 	end_time = time.perf_counter_ns()
 	original_message = ""
 	with open(message_path) as f:
 			original_message = "\n".join(f.readlines())
 	#print("Decrypted message: ", decrypted_message)
 	#print("Original message: ", original_message)
+
 	# we crop this to remove the paddings
 	print("Are they the same (noted, the decrypted string is cropped to the length of the original message to remove paddings)?", decrypted_message[:len(original_message)] == original_message)
+
+	# write the end time.
 	with open("receiver.csv", "a") as outfile:
 		outfile.write(str(end_time) + "\n")
 

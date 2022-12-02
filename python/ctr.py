@@ -13,6 +13,20 @@ class CTR(EncryptionMode):
        super().__init__(IV, block_size, key, e_algo, d_algo)
        self.IV = IV
        self.IV_num = int.from_bytes(IV, "little")
+       self.random_nums = []
+    
+    def calculate_xor_nums(self):
+        for i in range(0, self.blocks_num):
+            random_num = int.to_bytes(self.IV_num + i, self.block_size, "little")
+            random_num = self.e_algo(random_num)
+            self.random_nums.append(random_num)
+    
+    def get_random_nums(self):
+        return self.random_nums
+    
+    def set_block_num(self, num):
+        self.blocks_num = num
+                               
                                
     # get a block from the disk 
     def get_block(self, block_index):

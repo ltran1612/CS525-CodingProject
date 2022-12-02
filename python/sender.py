@@ -25,10 +25,10 @@ if __name__ == "__main__":
 		print("End of input reading")
 		exit(0)
 	
+	# default algorithm is AES
 	# set up other parameters
 	IV = Random.new().read(block_size) # IV
 	key = Random.new().read(32) # key for the encryption
-	
 	# pick the encryption algorithm
 	cipher = AES.new(key, AES.MODE_ECB)
 	e_algo = cipher.encrypt
@@ -45,7 +45,7 @@ if __name__ == "__main__":
 		print("")
 		exit(0)
 	algo_code = opt
-	if algo_code == 2:
+	if algo_code == 2: # meant for RSA, but we got into some problems with the RSA of pycryptodome.
 		print("Invalid input")
 		exit(1)
 		key = RSA.generate(2048)
@@ -62,14 +62,16 @@ if __name__ == "__main__":
 		cipher = PKCS1_OAEP.new(keys[0])
 		d_algo = cipher.decrypt
 		key = b'0'
-	else:
+	else: # AES
 		key = Random.new().read(32)
 		cipher = AES.new(key, AES.MODE_ECB)
 		e_algo = cipher.encrypt
 		d_algo = cipher.decrypt
+
+		if block_size != 16:
+			print("The AES used in this experiment does not support other block sizes other than 16")
 		
-	
-	# pick message
+	# test message is in test_message.txt
 	message_path = "test_message.txt"
 	
 	original_message = ""
@@ -87,24 +89,23 @@ if __name__ == "__main__":
 	except Exception:
 		print("")
 		exit(0)
+	
+	# create the objects for each encryption mode
 	encrypt_code = opt
 	encrypt_mode = None
 	if encrypt_code == 2: #OFB
 		encrypt_mode = OFB(IV, block_size, key, e_algo, d_algo)
 	elif encrypt_code == 3: #CTR
 		encrypt_mode = CTR(IV, block_size, key, e_algo, d_algo)
-	else:
-		# create a cbc object
+	else: # CBC
 		encrypt_mode = CBC(IV, block_size, key, e_algo, d_algo)
 		
 	# set the message
 	encrypt_mode.set_message(original_message)
 	# set the message size
 	block_nums = encrypt_mode.get_size()
-	#print(block_nums)
 
 	# send these information to the receiver
-
 	# send block size
 	message = bytearray()
 	for value in int.to_bytes(0, 8, "little"):
@@ -161,20 +162,24 @@ if __name__ == "__main__":
 		message.append(value)
 	sock.sendto(message, (UDP_IP, UDP_PORT))
 
+	# wait for the report from the receiver that the receiver has finished setting up.
 	sock.setblocking(True)
 	value, addr = sock.recvfrom(1024)
 	value = int.from_bytes(value, "little")
-	if value == 1:
+	if value == 1: # set up successful
 		print("set up successful")
 		sock.setblocking(False)
 	else:
 		print("set up failed")
 		exit(1)
 
+	# special cases for OFB
+	if encrypt_code == 2: # OFB
+		encrypt_mode.calculate_xor_nums()
+		
 	# start sending the cipher blocks
 	start_time = time.perf_counter_ns()
 	if encrypt_code == 2: # OFB
-		encrypt_mode.calculate_xor_nums()
 		for i in range(block_nums):
 			block = encrypt_mode.get_block(i)
 			sock.sendto(block, (UDP_IP, UDP_PORT))
@@ -182,10 +187,12 @@ if __name__ == "__main__":
 		for i in range(block_nums):
 			block = encrypt_mode.get_block(i)
 			sock.sendto(block, (UDP_IP, UDP_PORT))
-	else:
+	else: # CBC
 		for i in range(block_nums):
 			block = encrypt_mode.get_block(i)
 			sock.sendto(block, (UDP_IP, UDP_PORT))
+	
+	# write the start time
 	with open("sender.csv", "a") as outfile:
 		outfile.write(str(start_time) + "\n")
 
