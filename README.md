@@ -3,29 +3,44 @@
 ## Description
 The goal of this project is to implement 3 modes of block cipher learned in class, namely CBC, OFB, and CRT. Then, we need to compare their performance. 
 
-## Language and Libraries
+## How to run
+### Install pycryptodome
 
-## Test Plan
-### Description of the test program
-The idea for the test program would be to have a sender process and a receiver process.
+    pip install pycryptodome
 
-The sender will send a certain amount of messages to the receiver with each of the block cipher mode.
+### Run the program
+Step 0.1: Get into the folder python (Assuming that you are inside the root of the git repository).
+    
+    cd python
 
-When the sender starts, we will save a timestamp, when the receiver ends, we will save another timestamp. This will allow us to calculate the total amount of time taken to transmit the same message for each cipher block mode. 
+Step 0.2: Update test.txt with the message that you want to test. The message must be in the utf-8 encoding. 
 
-#### Why process instead of threads?
-This is because depending on the operating systems and programming languages, threads may not be run parallely but only concurrently on multi-cores systems since they belong to the same process and share the same resources. 
+Step 1: Run the receiver.py on a terminal session.
 
-While processes have a higher chance of being run in different cores since they are meant to be separated. 
+    python3 receiver.py
 
-#### The benefits of running on local machines
-The benefit of running such system in a local machine is to reduce the effect of transmission delay due to propagation delay and packet loss. 
+Step 2: Run the sender.py on a separate terminal session
 
-#### The transport protocol to use 
-We will use UDP as the transport layer protocol to eliminate the variable delays from the transport layer protocol like TCP. 
+    python3 sender.py
 
-### Encryption/Decryption Algorithm
+## Structure of the code
+The codes for the experiment is in the python/ folder
 
-### Measurement Method
-### The size of the message to send
+### CBC
+cbc.py
+This contains a class with functions for CBC block ciphers.
 
+### OFB
+ofb.py
+This contains a class with functions for OFB block ciphers. 
+However, the functions in this class cannot run on multiprocess in Python. The decrypt function that can run on multiprocess is in receiver.py
+
+### CTR
+ctr.py
+This contains a class with functions for CTR block ciphers. 
+However, the functions in this class cannot run on multiprocess in Python. The decrypt function that can run on multiprocess is in receiver.py
+
+## The behaviour of the program.
+The test message must be in the file test_message.txt
+The start time will be in sender.csv
+The end time will be in receiver.csv
