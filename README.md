@@ -13,7 +13,7 @@ Step 0.1: Get into the folder python (Assuming that you are inside the root of t
     
     cd python
 
-Step 0.2: Update test.txt with the message that you want to test. The message must be in the utf-8 encoding. 
+Step 0.2: Update test_message.txt with the message that you want to test. The message must be in the utf-8 encoding. 
 
 Step 1: Run the receiver.py on a terminal session.
 
