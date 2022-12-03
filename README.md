@@ -65,10 +65,14 @@ At the start, after the user has entered the input. The sender will send the fol
 + The number of cipher blocks.
 + The path to the message (which is test_message.txt).
 
-Then, the sender will wait for the receiver to send back a message saying that the receiver has finished setting up and is ready to receive the cipher blocks. 
+Then, the sender will wait for the receiver to send back a message saying that the receiver has finished setting up and is ready to receive the cipher blocks.
+
 Once the sender receive the message, the sender will use perf_counter() to get the start timestamp and start sending the cipher blocks and the receiver will start decrypting the cipher blocks.
-Once the receiver has finished decrypting to get the plaintext blocks, it will use perf_counter() again to get the end timestamp and output it to receiver.csv . 
-One the sender has sent everything, the sender will write the start timestamp to sender.csv .
+
+Once the receiver has finished decrypting to get the plaintext blocks, it will use perf_counter() to get the end timestamp and output it to receiver.csv . 
+
 It will also read the original message using the message path and compare to see if the decrypted message is the same as the original message.
+
+One the sender has sent everything, the sender will write the start timestamp to sender.csv .
 
 
